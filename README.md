@@ -122,13 +122,14 @@ In order to solve the issue, it is possible to work in two separate ways:
 
 ### TODO ###
 
-* Minimize timings (e.g. by exploiting the embedded event-based behavior)
 * Improve code readability
+* Improve security
 * Test with additional modems (community required)
 * Support to voice inputs/outputs
 * Support to (shared) blacklists
 * Support to auto answers via SMS
 * Support to advanced logs silently sent as file every 24 hours
+* Minimize timings (e.g. by exploiting the embedded event-based behavior)
 
 ### Contacts ###
 
