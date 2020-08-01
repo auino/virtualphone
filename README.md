@@ -118,7 +118,7 @@ This makes many persons (including call centers) hang up the phone.
 In order to solve the issue, it is possible to work in two separate ways:
 
 1. By adding a vocal waiting message telling the user the call is going to be forwarded and asking not to hang up the phone (apparently, interfacing with the secondary data channel is not easy as it may seem; community support needed)
-2. By automatically sending an SMS message to the user, on "preventive" call closure
+2. By automatically sending an SMS message to the user, on early call closure
 
 ### TODO ###
 
