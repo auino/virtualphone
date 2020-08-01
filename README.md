@@ -110,6 +110,16 @@ Considering calendar integration, you have to set reccurring events with the pre
 In addition, it is possible to override group configurations, for specific contacts, by creating a contact event with title equal to the name of the contact.
 Multiple names can be concatenated in this case.
 
+### Known limits ###
+
+Currently, when a call is received, the system automatically answers it and immediately puts the call on hold, to make a secondary call to the master phone.
+This makes many persons (including call centers) hang up the phone.
+
+In order to solve the issue, it is possible to work in two separate ways:
+
+1. By adding a vocal waiting message telling the user the call is going to be forwarded and asking not to hang up the phone (apparently, interfacing with the secondary data channel is not easy as it may seem; community support needed)
+2. By automatically sending an SMS message to the user, on "preventive" call closure
+
 ### TODO ###
 
 * Minimize timings (e.g. by exploiting the embedded event-based behavior)
