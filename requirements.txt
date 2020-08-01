@@ -1,0 +1,6 @@
+serial
+urllib
+telepot
+vobject
+icalendar
+recurring_ical_events
