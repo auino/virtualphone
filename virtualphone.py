@@ -446,7 +446,7 @@ def handle_telegram_message(msg):
 	# non owner messages are ignored
 	if not str(chat_id) in str(BOT_OWNERS): return
 	# other commands
-	if startswith(t.lower(), '/getowners'):
+	if t.lower() == '/getowners':
 		t = ''
 		for o in BOT_OWNERS: t += ' - '+str(o)+'\n'
 		send_telegram_message(TELEGRAM_MESSAGE_GETOWNERS.replace('{OWNERS}', t), chat_id=chat_id)
@@ -459,14 +459,14 @@ def handle_telegram_message(msg):
 			for n in c.get('tels'): t += '        '+n+'\n'
 		if len(r) > 0: send_telegram_message(TELEGRAM_MESSAGE_SEARCH_RESULT.replace('{QUERY}', q).replace('{CONTACTS}', t), chat_id=chat_id)
 		else: send_telegram_message(TELEGRAM_MESSAGE_SEARCH_NORESULT.replace('{QUERY}', q), chat_id=chat_id)
-	if startswith(t.lower(), '/getcontactscount'): send_telegram_message(TELEGRAM_MESSAGE_GETCONTACTSCOUNT.replace('{COUNT}', str(len(CONTACTS_LIST))), chat_id=chat_id)
+	if t.lower() == '/getcontactscount': send_telegram_message(TELEGRAM_MESSAGE_GETCONTACTSCOUNT.replace('{COUNT}', str(len(CONTACTS_LIST))), chat_id=chat_id)
 	if startswith(t.lower(), '/command'): serial_control_send(t[t.index(' ')+1:].replace('\n', ''), chat_id=chat_id)
 	if startswith(t.lower(), '/getforwardfromnumber'):
 		n = t.split(' ')[1]
 		f = getmasterphonenumberfromnumber(n, MASTERPHONE)
 		send_telegram_message(TELEGRAM_MESSAGE_GETFORWARDFROMNUMBER.replace('{NUMBER}', n).replace('{FORWARD}', f), chat_id=chat_id)
 	else:
-		if startswith(t.lower(), '/getforward'): send_telegram_message(TELEGRAM_MESSAGE_GETFORWARD.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
+		if t.lower() == '/getforward': send_telegram_message(TELEGRAM_MESSAGE_GETFORWARD.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
 	if startswith(t.lower(), '/setforward'):
 		try:
 			MASTERPHONE = t.split(' ')[1]
@@ -485,7 +485,7 @@ def handle_telegram_message(msg):
 		send_telegram_message(TELEGRAM_MESSAGE_CALL.replace('{NUMBER}', getfullcallerinfo(t_split[1])), chat_id=chat_id)
 		send_telegram_message(TELEGRAM_MESSAGE_CALL_MASTERPHONE.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
 		serial_call(t_split[1], from_number)
-	if startswith(t.lower('/close')):
+	if t.lower == '/close':
 		trigger_commands(CLOSE_ACTION)
 		send_telegram_message(TELEGRAM_MESSAGE_CLOSE, chat_id=chat_id)
 	if startswith(t.lower(), '/sms'):
