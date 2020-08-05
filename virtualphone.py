@@ -76,7 +76,7 @@ TELEGRAM_MESSAGE_SEARCH_NORESULT = 'No contacts are found for given input name \
 TELEGRAM_MESSAGE_CALLINCOMING = 'Incoming call from {NUMBER}'
 TELEGRAM_MESSAGE_CALLINCOMING_MASTERPHONE = 'Call forwarded to {NUMBER}'
 TELEGRAM_MESSAGE_CALL = 'Preparing a call with {NUMBER}'
-TELEGRAM_MESSAGE_CALL_MASTERPHONE = 'Calling {NUMBER}'
+TELEGRAM_MESSAGE_CALL_MASTERPHONE = 'Calling master phone {NUMBER}'
 TELEGRAM_MESSAGE_CALL_CALLINGNUMBER = 'Calling the contact'
 TELEGRAM_MESSAGE_CALL_MERGE = 'Call merged'
 TELEGRAM_MESSAGE_CALL_ENDED = 'Call closed'
@@ -342,6 +342,12 @@ def getcontactsfiles():
 		r.append({'filename':CONTACTS_FOLDER+e, 'groupname':e[:-len(n)]})
 	return r
 
+# gets the group name from given number
+def getgroupfromnumber(n):
+	g = getcontactdetailsfromnumber(CALLFROM, True)
+	if g is None: return None
+	return g.get('group')
+
 ### CALENDAR FUNCTIONS ###
 
 # gets the master phone number from a given event title (group, or contact name), None if the master phone number is not found for this temporal moment
@@ -550,6 +556,8 @@ def handle_serial_message_log():
 					if DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS is None: shouldnotaccept = True
 					else: mp = DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS
 				else:
+					# getting the group from the number of the caller
+					g = getgrupfromnumber(CALLFROM)
 					if g is None: # DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP
 						# managing callers with known number but not registered in the contacts list
 						if DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP is None: shouldnotaccept = True
