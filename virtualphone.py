@@ -485,7 +485,7 @@ def handle_telegram_message(msg):
 		send_telegram_message(TELEGRAM_MESSAGE_CALL.replace('{NUMBER}', getfullcallerinfo(t_split[1])), chat_id=chat_id)
 		send_telegram_message(TELEGRAM_MESSAGE_CALL_MASTERPHONE.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
 		serial_call(t_split[1], from_number)
-	if t.lower == '/close':
+	if t.lower() == '/close':
 		trigger_commands(CLOSE_ACTION)
 		send_telegram_message(TELEGRAM_MESSAGE_CLOSE, chat_id=chat_id)
 	if startswith(t.lower(), '/sms'):
