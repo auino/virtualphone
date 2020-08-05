@@ -460,7 +460,7 @@ def handle_telegram_message(msg):
 		if len(r) > 0: send_telegram_message(TELEGRAM_MESSAGE_SEARCH_RESULT.replace('{QUERY}', q).replace('{CONTACTS}', t), chat_id=chat_id)
 		else: send_telegram_message(TELEGRAM_MESSAGE_SEARCH_NORESULT.replace('{QUERY}', q), chat_id=chat_id)
 	if t.lower() == '/getcontactscount': send_telegram_message(TELEGRAM_MESSAGE_GETCONTACTSCOUNT.replace('{COUNT}', str(len(CONTACTS_LIST))), chat_id=chat_id)
-	if startswith(t.lower(), '/command'): serial_control_send(t[t.index(' ')+1:].replace('\n', ''), chat_id=chat_id)
+	if startswith(t.lower(), '/command'): serial_control_send(t[t.index(' ')+1:].replace('\n', ''))
 	if startswith(t.lower(), '/getforwardfromnumber'):
 		n = t.split(' ')[1]
 		f = getmasterphonenumberfromnumber(n, MASTERPHONE)
