@@ -124,6 +124,7 @@ In order to solve the issue, it is possible to work in two separate ways:
 
 * Improve code readability
 * Improve security
+* Improve input checking
 * Test with additional modems (community required)
 * Support to voice inputs/outputs
 * Support to (shared) blacklists
