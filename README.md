@@ -122,7 +122,6 @@ In order to solve the issue, it is possible to work in two separate ways:
 
 ### TODO ###
 
-* Support variables sharing through threads
 * Improve code readability
 * Improve security
 * Improve input checking

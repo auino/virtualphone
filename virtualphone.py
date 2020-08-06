@@ -398,6 +398,7 @@ def getmasterphonenumberfromnumber(n, masterphone=None):
 # handles incoming Telegram control messages
 def handle_telegram_message(msg):
 	global CONTACTS_LIST, MASTERPHONE, VERBOSE, BOT_OWNERS
+	global DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS, DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP, DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER
 	content_type, chat_type, chat_id = telepot.glance(msg)
 	# file received (only for vcf contacts)
 	try:
@@ -472,7 +473,11 @@ def handle_telegram_message(msg):
 		if t.lower() == '/getmasterphone': send_telegram_message(TELEGRAM_MESSAGE_GETMASTERPHONE.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
 	if startswith(t.lower(), '/setmasterphone'):
 		try:
-			MASTERPHONE = t.split(' ')[1]
+			mp = t.split(' ')[1]
+			if DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS == MASTERPHONE: DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS = mp
+			if DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP == MASTERPHONE: DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP = mp
+			if DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER == MASTERPHONE: DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER = mp
+			MASTERPHONE = mp
 			send_telegram_message(TELEGRAM_MESSAGE_SETMASTERPHONE.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
 		except: pass
 	if t.lower() == '/verbose_on':
@@ -511,6 +516,7 @@ def handle_serial_message_control():
 # handles incoming serial log messages
 def handle_serial_message_log():
 	global CALLFROM, MASTERPHONE, VERBOSE
+	global DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS, DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP, DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER
 	ser_log = serial.Serial(port=SERIAL_PORT_LOG, baudrate=SERIAL_BAUDRATE, dsrdtr=True, rtscts=True)
 	ser_log.close()
 	ser_log.open()
