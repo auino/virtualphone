@@ -48,7 +48,7 @@ TELEGRAM_MESSAGE_TEMPORARYOWNER_NOTIFIYWRONGPASSWORD = True
 # should the system notify wrong password attempts to owners?
 TELEGRAM_MESSAGE_TEMPORARYOWNER_NOTIFIYWRONGPASSWORD_TOOWNERS = True
 
-# the default action to take when receiving calls out of the calendar hours: None to ignore (set as busy), string with default forward number otherwise
+# the default action to take when receiving calls out of the calendar hours: None to ignore (set as busy), string with default master phone number otherwise
 # out of calendar calls may be: unknown calls (DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS), known callers not in any group (DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP), known callers in group not configured (DEFAULT_OUTOFCALENDARCALLS_OUTPUTOFREACHABILITYTIMECALLER)
 DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS = None
 DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP = MASTERPHONE
@@ -63,7 +63,7 @@ CONTACTS_FOLDER = './contacts/'
 
 # telegram answer messages
 TELEGRAM_MESSAGE_BOOT = 'Service is running'
-TELEGRAM_MESSAGE_HELP = 'Available commands:\n/help to show this help message\n/getid to get your chat id\n/getowners to get the chat ids of all current owners\n/addtemporaryowner `<password>` to add a third temporary owner to the bot (authentication is done by exchanging a clear text `<password>`)\n/getcontactscount to get the number of registered phone contacts\n/verbose\_on to enable verbose mode\n/verbose\_off to disable verbose mode\n/command `<c>` to send the AT-command `<c>` to the serial port of the modem\n/call `<number>` `[<from>]` to call a number `<number>` (optionally, from `<from>` number)\n/close to interrupt all existing calls\n/sms `<number>` `<text>` to text `<number>` with `<text>`\n/setforward `<number>` to set the default forwarding phone number to `<number>`\n/getforward to get the default forwarding phone number\n/getforwardfromnumber `<number>` to get the forwarding phone number from a given contact number `<number>`\n/search `<contact_name>` to look for a contact and related numbers from a given (even partial) name `<contact_name>`\n\nYou can also send a .vcf file containing a list of contacts to the bot: the name of the file will be the name of the contacts group, as matched from calendar information.'
+TELEGRAM_MESSAGE_HELP = 'Available commands:\n/help to show this help message\n/getid to get your chat id\n/getowners to get the chat ids of all current owners\n/addtemporaryowner `<password>` to add a third temporary owner to the bot (authentication is done by exchanging a clear text `<password>`)\n/getcontactscount to get the number of registered phone contacts\n/verbose\_on to enable verbose mode\n/verbose\_off to disable verbose mode\n/command `<c>` to send the AT-command `<c>` to the serial port of the modem\n/call `<number>` `[<from>]` to call a number `<number>` (optionally, from `<from>` number)\n/close to interrupt all existing calls\n/sms `<number>` `<text>` to text `<number>` with `<text>`\n/setmasterphone `<number>` to set the default master phone number to `<number>`\n/getmasterphone to get the default master phone number\n/getmasterphonefromnumber `<number>` to get the master phone number from a given contact number `<number>`\n/search `<contact_name>` to look for a contact and related numbers from a given (even partial) name `<contact_name>`\n\nYou can also send a .vcf file containing a list of contacts to the bot: the name of the file will be the name of the contacts group, as matched from calendar information.'
 TELEGRAM_MESSAGE_GETOWNERS = 'Following owners are enabled:\n{OWNERS}'
 TELEGRAM_MESSAGE_GETID = 'Your chat id is {ID}'
 TELEGRAM_MESSAGE_VERBOSE = 'Verbose mode is {STATUS}'
@@ -74,9 +74,9 @@ TELEGRAM_MESSAGE_TEMPORARYOWNER_DISABLED = 'Temporary owners functionality is no
 TELEGRAM_MESSAGE_SEARCH_RESULT = 'Found contacts for given input name \'{QUERY}\' are:\n{CONTACTS}'
 TELEGRAM_MESSAGE_SEARCH_NORESULT = 'No contacts are found for given input name \'{QUERY}\''
 TELEGRAM_MESSAGE_CALLINCOMING = 'Incoming call from {NUMBER}'
-TELEGRAM_MESSAGE_CALLINCOMING_MASTERPHONE = 'Call forwarded to {NUMBER}'
+TELEGRAM_MESSAGE_CALLINCOMING_MASTERPHONE = 'Call forwarded to master phone ({NUMBER})'
 TELEGRAM_MESSAGE_CALL = 'Preparing a call with {NUMBER}'
-TELEGRAM_MESSAGE_CALL_MASTERPHONE = 'Calling master phone {NUMBER}'
+TELEGRAM_MESSAGE_CALL_MASTERPHONE = 'Calling master phone ({NUMBER})'
 TELEGRAM_MESSAGE_CALL_CALLINGNUMBER = 'Calling the contact'
 TELEGRAM_MESSAGE_CALL_MERGE = 'Call merged'
 TELEGRAM_MESSAGE_CALL_ENDED = 'Call closed'
@@ -84,9 +84,9 @@ TELEGRAM_MESSAGE_CALLENDED = 'Call with {NUMBER} closed'
 TELEGRAM_MESSAGE_CALLNOTACCEPTED = 'Call from {NUMBER} not accepted'
 TELEGRAM_MESSAGE_CLOSE = 'Existent calls interrupted'
 TELEGRAM_MESSAGE_GETCONTACTSCOUNT = '{COUNT} phone contacts are currently registered'
-TELEGRAM_MESSAGE_GETFORWARDFROMNUMBER = 'Forward number for {NUMBER} is {FORWARD}'
-TELEGRAM_MESSAGE_GETFORWARD = 'Your default forward number is {NUMBER}'
-TELEGRAM_MESSAGE_SETFORWARD = 'Forward is now configured to {NUMBER}'
+TELEGRAM_MESSAGE_GETMASTERPHONEFROMNUMBER = 'Master phone number for {NUMBER} is {MASTERPHONE}'
+TELEGRAM_MESSAGE_GETMASTERPHONE = 'Your default master phone number is {NUMBER}'
+TELEGRAM_MESSAGE_SETMASTERPHONE = 'Default master phone number is now configured to {NUMBER}'
 TELEGRAM_MESSAGE_RECEIVEDSMS = 'Received SMS message from {NUMBER}: {MESSAGE}'
 TELEGRAM_MESSAGE_RECEIVEDCONTACTS = 'Loaded {NEWCONTACTSCOUNT} new contacts for the group \'{GROUPNAME}\' ({TOTALCONTACTSCOUNT} contacts registered)'
 TELEGRAM_MESSAGE_RECEIVEDCONTACTSERROR = 'An error just occurred'
@@ -397,10 +397,7 @@ def getmasterphonenumberfromnumber(n, masterphone=None):
 
 # handles incoming Telegram control messages
 def handle_telegram_message(msg):
-	global CONTACTS_LIST
-	global MASTERPHONE
-	global VERBOSE
-	global BOT_OWNERS
+	global CONTACTS_LIST, MASTERPHONE, VERBOSE, BOT_OWNERS
 	content_type, chat_type, chat_id = telepot.glance(msg)
 	# file received (only for vcf contacts)
 	try:
@@ -467,16 +464,16 @@ def handle_telegram_message(msg):
 		else: send_telegram_message(TELEGRAM_MESSAGE_SEARCH_NORESULT.replace('{QUERY}', q), chat_id=chat_id)
 	if t.lower() == '/getcontactscount': send_telegram_message(TELEGRAM_MESSAGE_GETCONTACTSCOUNT.replace('{COUNT}', str(len(CONTACTS_LIST))), chat_id=chat_id)
 	if startswith(t.lower(), '/command'): serial_control_send(t[t.index(' ')+1:].replace('\n', ''))
-	if startswith(t.lower(), '/getforwardfromnumber'):
+	if startswith(t.lower(), '/getmasterphonefromnumber'):
 		n = t.split(' ')[1]
 		f = getmasterphonenumberfromnumber(n, MASTERPHONE)
-		send_telegram_message(TELEGRAM_MESSAGE_GETFORWARDFROMNUMBER.replace('{NUMBER}', n).replace('{FORWARD}', f), chat_id=chat_id)
+		send_telegram_message(TELEGRAM_MESSAGE_GETMASTERPHONEFROMNUMBER.replace('{NUMBER}', n).replace('{MASTERPHONE}', f), chat_id=chat_id)
 	else:
-		if t.lower() == '/getforward': send_telegram_message(TELEGRAM_MESSAGE_GETFORWARD.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
-	if startswith(t.lower(), '/setforward'):
+		if t.lower() == '/getmasterphone': send_telegram_message(TELEGRAM_MESSAGE_GETMASTERPHONE.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
+	if startswith(t.lower(), '/setmasterphone'):
 		try:
 			MASTERPHONE = t.split(' ')[1]
-			send_telegram_message(TELEGRAM_MESSAGE_SETFORWARD.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
+			send_telegram_message(TELEGRAM_MESSAGE_SETMASTERPHONE.replace('{NUMBER}', MASTERPHONE), chat_id=chat_id)
 		except: pass
 	if t.lower() == '/verbose_on':
 		VERBOSE = True
@@ -513,8 +510,7 @@ def handle_serial_message_control():
 
 # handles incoming serial log messages
 def handle_serial_message_log():
-	global CALLFROM
-	global VERBOSE
+	global CALLFROM, MASTERPHONE, VERBOSE
 	ser_log = serial.Serial(port=SERIAL_PORT_LOG, baudrate=SERIAL_BAUDRATE, dsrdtr=True, rtscts=True)
 	ser_log.close()
 	ser_log.open()
@@ -583,7 +579,11 @@ def handle_serial_message_log():
 			movetostate(States.incomingcall_masterphoneanswered)
 		if startswith(r, "^CEND"):
 			trigger_commands(ANSWER_ACTION_ONCLOUSURE)
-			if isreceivingacall and startswith(r, "^CEND"): send_telegram_message(TELEGRAM_MESSAGE_CALLENDED.replace('{NUMBER}', getfullcallerinfo(CALLFROM)))
+			if isreceivingacall and startswith(r, "^CEND"):
+				send_telegram_message(TELEGRAM_MESSAGE_CALLENDED.replace('{NUMBER}', getfullcallerinfo(CALLFROM)))
+				# checking if this is an early closure of the communication
+				#if (isinstate(States.incomingcall_received) or isinstate(States.incomingcall_calleronhold) or isinstate(States.incomingcall_forwarding) or isinstate(States.incomingcall_masterphoneanswered)) and startswith(r, "^CEND:1"):
+					# TODO: manage early connection closures
 			else:
 				if startswith(r, "^CEND:1"): send_telegram_message(TELEGRAM_MESSAGE_CALL_ENDED)
 			movetostate(States.incomingcall_closed)

@@ -72,9 +72,9 @@ If your SIM card has PIN enabled, you'll need to disable it (see [this post](htt
 * `/call <number> [<from>]` to initiate a call to the number `<number>` (optionally, from `<from>` number)
 * `/close` to interrupt all existing calls
 * `/sms <number> <text>` to text `<number>` with `<text>`
-* `/setforward <number>` to set the default forwarding phone number
-* `/getforward` to get the default forwarding phone number
-* `/getforwardfromnumber` to get the forwarding phone number from a given contact number `<number>`
+* `/setmasterphone <number>` to set the default master phone number
+* `/getmasterphone` to get the default master phone number
+* `/getmasterphonefromnumber` to get the master phone number from a given contact number `<number>`
 * `/search <contact_name>` to look for a contact and related numbers from a given (even partial) name `<contact_name>`
 
 ### Temporary owners ###
@@ -122,6 +122,7 @@ In order to solve the issue, it is possible to work in two separate ways:
 
 ### TODO ###
 
+* Support variables sharing through threads
 * Improve code readability
 * Improve security
 * Improve input checking
