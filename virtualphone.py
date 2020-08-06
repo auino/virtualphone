@@ -67,7 +67,7 @@ TELEGRAM_MESSAGE_HELP = 'Available commands:\n/help to show this help message\n/
 TELEGRAM_MESSAGE_GETOWNERS = 'Following owners are enabled:\n{OWNERS}'
 TELEGRAM_MESSAGE_GETID = 'Your chat id is {ID}'
 TELEGRAM_MESSAGE_VERBOSE = 'Verbose mode is {STATUS}'
-TELEGRAM_MESSAGE_TEMPORARYOWNER_ADDED = 'Temporary owner \'{OWNER}\' added'
+TELEGRAM_MESSAGE_TEMPORARYOWNER_ADDED = 'Temporary owner \'{OWNER}\' added: remember to restart the service as soon as it is not required anymore'
 TELEGRAM_MESSAGE_TEMPORARYOWNER_WRONGPASSWORD = 'Your temporary owner password is wrong'
 TELEGRAM_MESSAGE_TEMPORARYOWNER_WRONGPASSWORD_FOROWNERS = 'User \'{USER}\' tried to escalate to temporary owner, unsuccessfully'
 TELEGRAM_MESSAGE_TEMPORARYOWNER_DISABLED = 'Temporary owners functionality is not enabled'
@@ -557,7 +557,7 @@ def handle_serial_message_log():
 					else: mp = DEFAULT_OUTOFCALENDARCALLS_UNKNOWNCALLS
 				else:
 					# getting the group from the number of the caller
-					g = getgrupfromnumber(CALLFROM)
+					g = getgroupfromnumber(CALLFROM)
 					if g is None: # DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP
 						# managing callers with known number but not registered in the contacts list
 						if DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP is None: shouldnotaccept = True
