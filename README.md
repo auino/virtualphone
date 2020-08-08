@@ -8,6 +8,8 @@ The basic concept of the tool is to build a virtual phone able to expose to your
 
 The whole system can easily be controlled through a dedicated Telegram bot and integrated with your contacts and calendar.
 
+It is suggested to have a flat plan including multi-party calls plus free calls and texts.
+
 ### Supported modems ###
 
 The system was tested with [Huawei E173](https://consumer.huawei.com/en/routers/e3372/specs/) modem.

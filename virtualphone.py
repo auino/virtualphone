@@ -594,7 +594,7 @@ def handle_serial_message_log():
 						try:
 							if isinstate(States.incomingcall_closed):
 								m = SMS_AUTOANSWER_CALLNOTACCEPTED_MESSAGE
-								serial_sms(CALLFROM, m):
+								serial_sms(CALLFROM, m)
 								send_telegram_message(SMS_AUTOANSWER_MESSAGELOG.replace('{NUMBER}', getfullcallerinfo(CALLFROM)).replace('{MESSAGE}', m))
 						except: pass
 					movetostate(States.idle)
@@ -619,7 +619,7 @@ def handle_serial_message_log():
 					if SMS_AUTOANSWER_EARLYCALLCLOSURE_ENABLE:
 						try:
 							m = SMS_AUTOANSWER_EARLYCALLCLOSURE_MESSAGE
-							serial_sms(CALLFROM, m):
+							serial_sms(CALLFROM, m)
 							send_telegram_message(SMS_AUTOANSWER_MESSAGELOG.replace('{NUMBER}', getfullcallerinfo(CALLFROM)).replace('{MESSAGE}', m))
 						except: pass
 			else:
