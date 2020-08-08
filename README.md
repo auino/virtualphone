@@ -55,8 +55,6 @@ Just run the software:
 python3 virtualphone.py
 ```
 
-If you need to run the software quickly, you can disable loading the contacts at boot by adding the command line argument `--quick`.
-
 If your SIM card has PIN enabled, you'll need to disable it (see [this post](https://developer.gemalto.com/threads/unlock-sim-require-pin-code) for further information).
 
 ### Available commands ###
@@ -115,10 +113,19 @@ Multiple names can be concatenated in this case.
 Currently, when a call is received, the system automatically answers it and immediately puts the call on hold, to make a secondary call to the master phone.
 This makes many persons (including call centers) hang up the phone.
 
-In order to solve the issue, it is possible to work in two separate ways:
+In order to solve the issue, check the [automatic SMS answers section](https://github.com/auino/virtualphone#automatic-sms-answers).
 
-1. By adding a vocal waiting message telling the user the call is going to be forwarded and asking not to hang up the phone (apparently, interfacing with the secondary data channel is not easy as it may seem; community support needed)
-2. By automatically sending an SMS message to the user, on early call closure
+How to enhance this? For instance, by adding a vocal waiting message telling the user the call is going to be forwarded and asking not to hang up the phone (apparently, interfacing with the secondary data channel is not easy as it may seem; community support needed).
+
+### Automatic SMS answers ###
+
+It is possible to set up the program to automatically send an SMS message to the caller.
+
+Following automatic SMS answers are supported:
+* on early call closure (see [known limits section](https://github.com/auino/virtualphone#known-limits))
+* on calls that are not accepted
+
+In order to configure automatic SMS answers, check `SMS_AUTOANSWER_*` variables in `virtualphone.py`.
 
 ### TODO ###
 
@@ -128,7 +135,6 @@ In order to solve the issue, it is possible to work in two separate ways:
 * Test with additional modems (community required)
 * Support to voice inputs/outputs
 * Support to (shared) blacklists
-* Support to auto answers via SMS
 * Support to advanced logs silently sent as file every 24 hours
 * Minimize timings (e.g. by exploiting the embedded event-based behavior)
 

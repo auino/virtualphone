@@ -93,6 +93,19 @@ TELEGRAM_MESSAGE_RECEIVEDCONTACTSERROR = 'An error just occurred'
 TELEGRAM_MESSAGE_RECEIVEDCONTACTSFORMATERROR = 'File format is incorrect (only .vcf files are accepted)'
 TELEGRAM_MESSAGE_SMSSENT = 'SMS message sent'
 
+# auto sms answers
+
+# general message sent to the owners
+SMS_AUTOANSWER_MESSAGELOG = 'I\'ve just sent the following SMS message to {NUMBER}: {MESSAGE}'
+
+# sms auto-answer configuration for early closures
+SMS_AUTOANSWER_EARLYCALLCLOSURE_ENABLE = False
+SMS_AUTOANSWER_EARLYCALLCLOSURE_MESSAGE = 'This is an automated message. I noticed your call attempt. Please try calling again and do not hang up the phone.'
+
+# sms auto-answer configuration for calls not accepted
+SMS_AUTOANSWER_CALLNOTACCEPTED_ENABLE = False
+SMS_AUTOANSWER_CALLNOTACCEPTED_MESSAGE = 'This is an automated message. I\'m currently not available. If your call is urgent, please send me a message.'
+
 # basic configuration for Huawei E173 modems
 
 SERIAL_PORT_CONTROL = '/dev/ttyUSB0'
@@ -111,7 +124,9 @@ class States(Enum):
 	incomingcall_masterphoneanswered = 6,
 	incomingcall_joined = 7,
 	incomingcall_rejected = 8,
-	incomingcall_forwarding = 9
+	incomingcall_forwarding = 9,
+	genericcall_closing = 10,
+	genericcall_closed = 11
 
 # commands to send to the modem at boot
 SERIAL_BOOTCOMMANDS = ['AT', 'AT+CLIP=1', 'AT+CRC=1', 'AT+CMGF=1', 'AT+CNMI=1,2']
@@ -203,10 +218,11 @@ def movetostate(s):
 
 ### TELEGRAM FUNCTION ###
 
-def send_telegram_message(m, chat_id=None, parse_mode='Markdown'):
+def send_telegram_message(m, chat_id=None, parse_mode='Markdown', onlysender=False):
 	global BOT_OWNERS, bot
 	recipients = BOT_OWNERS
 	if chat_id != None and not str(chat_id) in BOT_OWNERS: recipients.append(chat_id)
+	if onlysender: recipients = [chat_id]
 	for b in recipients: bot.sendMessage(b, str(m), parse_mode=parse_mode)
 
 ### SERIAL MODEM FUNCTIONS ###
@@ -427,8 +443,8 @@ def handle_telegram_message(msg):
 	# non commands are ignored
 	if len(t) == 0: return
 	if t[0] != '/': return
-	if t.lower() == '/help': send_telegram_message(TELEGRAM_MESSAGE_HELP, chat_id=chat_id)
-	if t.lower() == '/getid': send_telegram_message(TELEGRAM_MESSAGE_GETID.replace('{ID}', str(chat_id)), chat_id=chat_id)
+	if t.lower() == '/help': send_telegram_message(TELEGRAM_MESSAGE_HELP, chat_id=chat_id, onlysender=True)
+	if t.lower() == '/getid': send_telegram_message(TELEGRAM_MESSAGE_GETID.replace('{ID}', str(chat_id)), chat_id=chat_id, onlysender=True)
 	# temporary owners support
 	if startswith(t.lower(), '/addtemporaryowner'):
 		# checking if temporary owners is disabled
@@ -569,9 +585,18 @@ def handle_serial_message_log():
 						if DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER is None: shouldnotaccept = True # DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER
 						else: mp = DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER
 				if shouldnotaccept:
-					trigger_commands(ANSWER_ACTION_ONRECEPTION_NOTACCEPTED)
-					send_telegram_message(TELEGRAM_MESSAGE_CALLNOTACCEPTED.replace('{NUMBER}', getfullcallerinfo(CALLFROM)))
+					if isinstate(States.incomingcall_rejected) or isinstate(States.idle) or isinstate(States.incomingcall_closed): continue
 					movetostate(States.incomingcall_rejected)
+					trigger_commands(ANSWER_ACTION_ONRECEPTION_NOTACCEPTED)
+					movetostate(States.incomingcall_closed)
+					send_telegram_message(TELEGRAM_MESSAGE_CALLNOTACCEPTED.replace('{NUMBER}', getfullcallerinfo(CALLFROM)))
+					if SMS_AUTOANSWER_CALLNOTACCEPTED_ENABLE:
+						try:
+							if isinstate(States.incomingcall_closed):
+								m = SMS_AUTOANSWER_CALLNOTACCEPTED_MESSAGE
+								serial_sms(CALLFROM, m):
+								send_telegram_message(SMS_AUTOANSWER_MESSAGELOG.replace('{NUMBER}', getfullcallerinfo(CALLFROM)).replace('{MESSAGE}', m))
+						except: pass
 					movetostate(States.idle)
 					continue
 			movetostate(States.incomingcall_forwarding)
@@ -584,18 +609,25 @@ def handle_serial_message_log():
 			trigger_commands(ANSWER_ACTION_ONLASTENDPOINTANSWER)
 			movetostate(States.incomingcall_masterphoneanswered)
 		if startswith(r, "^CEND"):
+			movetostate(States.genericcall_closed)
 			trigger_commands(ANSWER_ACTION_ONCLOUSURE)
+			movetostate(States.genericcall_closed)
 			if isreceivingacall and startswith(r, "^CEND"):
 				send_telegram_message(TELEGRAM_MESSAGE_CALLENDED.replace('{NUMBER}', getfullcallerinfo(CALLFROM)))
 				# checking if this is an early closure of the communication
-				#if (isinstate(States.incomingcall_received) or isinstate(States.incomingcall_calleronhold) or isinstate(States.incomingcall_forwarding) or isinstate(States.incomingcall_masterphoneanswered)) and startswith(r, "^CEND:1"):
-					# TODO: manage early connection closures
+				if (isinstate(States.incomingcall_received) or isinstate(States.incomingcall_calleronhold) or isinstate(States.incomingcall_forwarding) or isinstate(States.incomingcall_masterphoneanswered)) and startswith(r, "^CEND:1"):
+					if SMS_AUTOANSWER_EARLYCALLCLOSURE_ENABLE:
+						try:
+							m = SMS_AUTOANSWER_EARLYCALLCLOSURE_MESSAGE
+							serial_sms(CALLFROM, m):
+							send_telegram_message(SMS_AUTOANSWER_MESSAGELOG.replace('{NUMBER}', getfullcallerinfo(CALLFROM)).replace('{MESSAGE}', m))
+						except: pass
 			else:
 				if startswith(r, "^CEND:1"): send_telegram_message(TELEGRAM_MESSAGE_CALL_ENDED)
-			movetostate(States.incomingcall_closed)
 			isreceivingacall = False
 			CALLFROM = None
 			skipfstcallfrom = True
+			movetostate(States.idle)
 		# incoming call managing: end
 		# sma managing: begin
 		if startswith(r, "+CMT"):
@@ -623,17 +655,10 @@ def handle_serial_message_log():
 
 ### MAIN FUNCTION ###
 
-# checking if quick run mode is enabled
-qr = False
-try:
-	if sys.argv[1] == '--quick': qr = True
-except: pass
-
 # loading all contacts
-if not qr:
-	l = getcontactsfiles()
-	for e in l: loadgrouptocontacts(e.get('filename'), e.get('groupname'))
-	print('Loaded '+str(len(CONTACTS_LIST))+' contacts')
+l = getcontactsfiles()
+for e in l: loadgrouptocontacts(e.get('filename'), e.get('groupname'))
+print('Loaded '+str(len(CONTACTS_LIST))+' contacts')
 
 # initializes communication on serial control port
 ser_control = serial.Serial(port=SERIAL_PORT_CONTROL, baudrate=SERIAL_BAUDRATE)
