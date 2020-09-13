@@ -609,9 +609,6 @@ def handle_serial_message_log():
 			trigger_commands(ANSWER_ACTION_ONLASTENDPOINTANSWER)
 			movetostate(States.incomingcall_masterphoneanswered)
 		if startswith(r, "^CEND"):
-			movetostate(States.genericcall_closed)
-			trigger_commands(ANSWER_ACTION_ONCLOUSURE)
-			movetostate(States.genericcall_closed)
 			if isreceivingacall and startswith(r, "^CEND"):
 				send_telegram_message(TELEGRAM_MESSAGE_CALLENDED.replace('{NUMBER}', getfullcallerinfo(CALLFROM)))
 				# checking if this is an early closure of the communication
@@ -624,6 +621,9 @@ def handle_serial_message_log():
 						except: pass
 			else:
 				if startswith(r, "^CEND:1"): send_telegram_message(TELEGRAM_MESSAGE_CALL_ENDED)
+			movetostate(States.genericcall_closed)
+			trigger_commands(ANSWER_ACTION_ONCLOUSURE)
+			movetostate(States.genericcall_closed)
 			isreceivingacall = False
 			CALLFROM = None
 			skipfstcallfrom = True
