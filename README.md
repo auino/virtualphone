@@ -110,6 +110,18 @@ Considering calendar integration, you have to set reccurring events with the pre
 In addition, it is possible to override group configurations, for specific contacts, by creating a contact event with title equal to the name of the contact.
 Multiple names can be concatenated in this case.
 
+#### Blacklist integration ####
+
+The program is able to connect to a blacklist (default one is the list found on [auino/global-telephone-spammers-list](https://github.com/auino/global-telephone-spammers-list)) to avoid spam calls.
+In this case, if the spammer is found on the contact list or in the calendar, the call will not be ignored.
+Notification of incoming spam calls through Telegram can be disabled through the `SPAMMERS_NOTIFY` variable.
+
+The list of spammers has to be in a `CSV` format including, in order:
+* a text description of the number
+* the `md5` result on the caller full number, including country code beginning with the `+` symbol, without spaces, dash lines, or other extra characters
+
+The `md5` option, being `md5` a one-way function, will provide anonimity to the callers (although spammers can be seen as not etical, we have to behave ethically).
+
 ### Known limits ###
 
 Currently, when a call is received, the system automatically answers it and immediately puts the call on hold, to make a secondary call to the master phone.
@@ -136,7 +148,6 @@ In order to configure automatic SMS answers, check `SMS_AUTOANSWER_*` variables 
 * Improve input checking
 * Test with additional modems (community required)
 * Support to voice inputs/outputs
-* Support to (shared) blacklists
 * Support to advanced logs silently sent as file every 24 hours
 * Minimize timings (e.g. by exploiting the embedded event-based behavior)
 

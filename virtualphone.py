@@ -4,7 +4,9 @@ import os
 import sys
 import json
 import time
+import ctypes
 import serial
+import hashlib
 import _thread
 import vobject
 import icalendar
@@ -36,6 +38,15 @@ CALENDAR_URL = os.environ['virtualphone_calendarurl']
 
 # temporary owners variables
 TEMPORARYOWNER_PASSWORD = os.environ['virtualphone_temporaryownerpassword']
+
+# notify of incoming spam calls?
+SPAMMERS_NOTIFY = True
+
+# URL including the list of known spammers, where each row is formatted as "<spammer_type>,<md5_of_the_full_number_with_country_code>"
+SPAMMERS_LIST_URL = 'https://raw.githubusercontent.com/auino/global-telephone-spammers-list/main/list.csv'
+
+# every how much seconds should the program update the spammers list?
+SPAMMERS_UPDATE_TIME = 60 * 60 * 24 # one day
 
 #############################
 ### CONFIGURATION - BEGIN ###
@@ -92,6 +103,7 @@ TELEGRAM_MESSAGE_RECEIVEDCONTACTS = 'Loaded {NEWCONTACTSCOUNT} new contacts for 
 TELEGRAM_MESSAGE_RECEIVEDCONTACTSERROR = 'An error just occurred'
 TELEGRAM_MESSAGE_RECEIVEDCONTACTSFORMATERROR = 'File format is incorrect (only .vcf files are accepted)'
 TELEGRAM_MESSAGE_SMSSENT = 'SMS message sent'
+TELEGRAM_MESSAGE_SPAMMER = 'Incoming call from spammer \'{GROUP}\' ({NUMBER}) not accepted'
 
 # auto sms answers
 
@@ -191,6 +203,9 @@ CONTACTS_LIST = []
 CURRENTSTATE = States.booting
 
 ### USEFUL FUNCTIONS ###
+
+# returns the object instance from its pointer (retrieved with the id function)
+def getobjectfrompointer(p): return ctypes.cast(p, ctypes.py_object).value
 
 # useful function to tell if a string s starts with a string n
 def startswith(s, n): return str(s)[:len(n)] == n
@@ -409,6 +424,29 @@ def getmasterphonenumberfromnumber(n, masterphone=None):
 	# returning result
 	return mp
 
+### SPAMMERS FUNCTIONS ###
+
+def loadspammers():
+	r = []
+	l = urllib.request.urlopen(SPAMMERS_LIST_URL).read()
+	for e in l.split('\n'):
+		e = e.split(',')
+		r.append({'details':e[0],'md5':e[1]})
+	return r
+
+def update_spammers(list_id):
+	while True:
+		l = getobjectfrompointer(list_id)
+		l = loadspammers()
+		spammers = l
+		time.sleep(SPAMMERS_UPDATE_TIME)
+
+def getspammerinfo(n):
+	m = hashlib.md5(n.replace(' ', '').encode()).hexdigest()
+	for e in spammers:
+		if e['md5'] == m: return e
+	return None
+
 ### HANDLERS ###
 
 # handles incoming Telegram control messages
@@ -579,7 +617,13 @@ def handle_serial_message_log():
 					if g is None: # DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP
 						# managing callers with known number but not registered in the contacts list
 						if DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP is None: shouldnotaccept = True
-						else: mp = DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP
+						else:
+							# managing spammers
+							spammerinfo = getspammerinfo(CALLFROM)
+							if not spammerinfo is None:
+								shouldnotaccept = True
+								if SPAMMERS_NOTIFY: send_telegram_message(TELEGRAM_MESSAGE_SPAMMER.replace('{NUMBER}', CALLFROM).replace('{GROUP}', spammerinfo.get('details')))
+							else: mp = DEFAULT_OUTOFCALENDARCALLS_CALLERNOTINGROUP
 					else:
 						# managing known callers outside of their time slot in the calendar
 						if DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER is None: shouldnotaccept = True # DEFAULT_OUTOFCALENDARCALLS_OUTOFREACHABILITYTIMECALLER
@@ -660,6 +704,10 @@ l = getcontactsfiles()
 for e in l: loadgrouptocontacts(e.get('filename'), e.get('groupname'))
 print('Loaded '+str(len(CONTACTS_LIST))+' contacts')
 
+# loading the list of spammers
+spammers = loadspammers()
+print('Loaded '+str(len(spammers))+' known spammers')
+
 # initializes communication on serial control port
 ser_control = serial.Serial(port=SERIAL_PORT_CONTROL, baudrate=SERIAL_BAUDRATE)
 ser_control.close()
@@ -672,6 +720,7 @@ bot = telepot.Bot(BOT_TOKEN)
 
 # runs the two threads to manage serial ports of the modem
 try:
+	_thread.start_new_thread(update_spammers, (id(spammers)))
 	_thread.start_new_thread(handle_serial_message_control, ())
 	_thread.start_new_thread(handle_serial_message_log, ())
 except: print ("Error: unable to start thread")
