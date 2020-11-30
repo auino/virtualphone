@@ -429,7 +429,7 @@ def getmasterphonenumberfromnumber(n, masterphone=None):
 def loadspammers():
 	r = []
 	l = urllib.request.urlopen(SPAMMERS_LIST_URL).read()
-	for e in l.split('\n'):
+	for e in l.decode().split('\n'):
 		e = e.split(',')
 		r.append({'details':e[0],'md5':e[1]})
 	return r
