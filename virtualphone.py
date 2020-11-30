@@ -436,9 +436,9 @@ def loadspammers():
 		except: pass
 	return r
 
-def update_spammers(list_id):
+def update_spammers():
 	while True:
-		l = getobjectfrompointer(list_id)
+		l = getobjectfrompointer(spammers_id)
 		l = loadspammers()
 		spammers = l
 		time.sleep(SPAMMERS_UPDATE_TIME)
@@ -708,6 +708,7 @@ print('Loaded '+str(len(CONTACTS_LIST))+' contacts')
 
 # loading the list of spammers
 spammers = loadspammers()
+spammers_id = id(spammers)
 print('Loaded '+str(len(spammers))+' known spammers')
 
 # initializes communication on serial control port
@@ -722,7 +723,7 @@ bot = telepot.Bot(BOT_TOKEN)
 
 # runs the two threads to manage serial ports of the modem
 try:
-	_thread.start_new_thread(update_spammers, (id(spammers)))
+	_thread.start_new_thread(update_spammers, ())
 	_thread.start_new_thread(handle_serial_message_control, ())
 	_thread.start_new_thread(handle_serial_message_log, ())
 except: print ("Error: unable to start thread")
