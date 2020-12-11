@@ -1,5 +1,5 @@
-serial
-urllib
+pySerial
+urllib3
 telepot
 vobject
 icalendar
