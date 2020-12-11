@@ -1,4 +1,4 @@
-pySerial
+pyserial
 urllib3
 telepot
 vobject
